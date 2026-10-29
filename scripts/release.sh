@@ -28,8 +28,12 @@ push="${2:-}"
 [ -n "$version" ] || { echo "usage: scripts/release.sh <version> [--push]   e.g. 0.40.0" >&2; exit 1; }
 # Accept "v0.40.0" and normalise: the manifest wants a bare version, the tag wants the v.
 version="${version#v}"
-[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-  echo "error: '$version' is not X.Y.Z" >&2; exit 1
+# A fourth segment is a fork's own release on top of an upstream one: 0.73.2.1 sorts above 0.73.2
+# and below 0.73.3 for Home Assistant's version comparison (AwesomeVersion), so updates are offered
+# in the right order. "0.73.2+fork.1" would not be (build metadata never compares higher), and
+# "0.73.2-fork.1" sorts BELOW 0.73.2.
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || {
+  echo "error: '$version' is not X.Y.Z or X.Y.Z.N" >&2; exit 1
 }
 tag="v$version"
 manifest="packages/ha-haismart/custom_components/haismart/manifest.json"
