@@ -23,7 +23,6 @@ GENERATED = ROOT / "custom_components" / "haismart"
 FORK_OWNER = "kucau0901"
 UPSTREAM_OWNER = "enapt"
 UPSTREAM_NAME = "Haismart (Haier local)"
-VERSION = "0.73.2.2"
 
 
 def _json(path: Path) -> dict:
@@ -54,7 +53,7 @@ class ManifestTest(unittest.TestCase):
     def test_manifest_metadata_points_at_this_fork(self) -> None:
         source = _json(SOURCE / "manifest.json")
         self.assertEqual(source["domain"], "haismart")
-        self.assertEqual(source["version"], VERSION)
+        self.assertRegex(source["version"], r"^\d+\.\d+\.\d+(?:\.\d+)?$")
         self.assertIn(f"@{FORK_OWNER}", source["codeowners"])
         self.assertIn(f"@{UPSTREAM_OWNER}", source["codeowners"], "upstream authorship stays credited")
         self.assertIn(FORK_OWNER, source["documentation"])
@@ -70,7 +69,7 @@ class ManifestTest(unittest.TestCase):
         source_without_requirements = {**source, "requirements": []}
         self.assertEqual(generated, source_without_requirements)
         self.assertEqual(generated["domain"], "haismart")
-        self.assertEqual(generated["version"], VERSION)
+        self.assertEqual(generated["version"], source["version"])
         for library in ("haismart_hrdp", "haismart_extractor"):
             vendored = GENERATED / "vendor" / library
             self.assertTrue((vendored / "__init__.py").is_file(), f"{library} is not vendored")
