@@ -89,7 +89,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/kucau0901/haismart-local/issues",
   "requirements": [],
-  "version": "0.73.2.2",
+  "version": "0.73.2.3",
   "zeroconf": [
     "_cae._udp.local."
   ]
