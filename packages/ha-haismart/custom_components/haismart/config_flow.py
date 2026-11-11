@@ -82,7 +82,9 @@ except ImportError:  # pragma: no cover - HA < 2025.2
     from homeassistant.components.zeroconf import ZeroconfServiceInfo
 
 if TYPE_CHECKING:
-    from homeassistant.components.dhcp import DhcpServiceInfo
+    # The DHCP component stopped re-exporting this class; the canonical module has it in every
+    # supported Home Assistant version.
+    from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 
 from haismart_hrdp.appliance import (
     ApplianceKind,

@@ -1,9 +1,9 @@
 # Haismart Local — Haier appliances in Home Assistant, with no cloud
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![Release](https://img.shields.io/github/v/release/enapt/haismart-local?color=green)](https://github.com/enapt/haismart-local/releases/latest)
-[![Validate](https://img.shields.io/github/actions/workflow/status/enapt/haismart-local/validate.yml?branch=main&label=validate)](https://github.com/enapt/haismart-local/actions/workflows/validate.yml)
-[![License](https://img.shields.io/github/license/enapt/haismart-local)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/kucau0901/haismart-local?color=green)](https://github.com/kucau0901/haismart-local/releases/latest)
+[![Validate](https://img.shields.io/github/actions/workflow/status/kucau0901/haismart-local/validate.yml?branch=main&label=validate)](https://github.com/kucau0901/haismart-local/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/kucau0901/haismart-local)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-join%20the%20chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/EFfknne8Bm)
 
 _Control your Haier appliance from Home Assistant entirely over your own network. You sign in once
@@ -12,10 +12,13 @@ LAN. Everything else it needs ships with it — the published details of **every
 the range**, and the byte-level model of **every other appliance category Haier documents**. Keep a
 copy of that key and setup works with no internet at all._
 
-> **This is the home of the project.** Releases are cut and issues answered at
-> [`enapt/haismart-local`](https://github.com/enapt/haismart-local). Copies exist elsewhere, with
-> version numbers of their own; if you arrived from one, check what you are running against
-> [the releases](https://github.com/enapt/haismart-local/releases).
+> **This is [`@kucau0901`](https://github.com/kucau0901)'s fork of
+> [`enapt/haismart-local`](https://github.com/enapt/haismart-local).** The integration, its protocol
+> work and the original documentation are upstream's; this fork keeps the local build in step with
+> the Home Assistant versions used here and carries its own version numbers. Upstream remains the
+> reference project: see [its releases](https://github.com/enapt/haismart-local/releases) and
+> [its issues](https://github.com/enapt/haismart-local/issues). Open issues about *this fork* in
+> [the fork's tracker](https://github.com/kucau0901/haismart-local/issues).
 
 **🌐 Getting started in your language:** [Bahasa Indonesia](docs/i18n/README.id.md) ·
 [ไทย](docs/i18n/README.th.md) · [Tiếng Việt](docs/i18n/README.vi.md) ·
@@ -219,7 +222,7 @@ accepted by the appliance.
 
 1. Make sure [HACS](https://hacs.xyz/) is installed.
 1. Open this repository in HACS:\
-   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=enapt&repository=haismart-local&category=integration)
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=kucau0901&repository=haismart-local&category=integration)
 1. Click **Download**, then **Download** again in the version dialog.
 1. **Restart Home Assistant.** A custom integration's code is only loaded at startup — reloading the
    entry is not enough.
@@ -229,7 +232,7 @@ accepted by the appliance.
 
 1. Open **HACS** from the sidebar.
 1. Three-dot menu, top right → **Custom repositories**.
-1. Repository: `https://github.com/enapt/haismart-local`, type **Integration** → **Add**.
+1. Repository: `https://github.com/kucau0901/haismart-local`, type **Integration** → **Add**.
 1. Search HACS for **Haismart** → **Download**.
 1. Restart Home Assistant.
 
@@ -238,13 +241,49 @@ accepted by the appliance.
 <details>
 <summary>Option 2 — manual installation</summary>
 
-1. Download the source of the [latest release](https://github.com/enapt/haismart-local/releases/latest).
+1. Download the source of the [latest release](https://github.com/kucau0901/haismart-local/releases/latest).
 1. Copy the `custom_components/haismart/` folder into your Home Assistant `config/custom_components/`.
 1. Restart Home Assistant.
 
 It's fully self-contained — no `pip install` step, the helper libraries are bundled.
 
 </details>
+
+### Marketplace, and upgrading from another copy
+
+Home Assistant 2026.11 replaces HACS with the built-in **Marketplace**. An existing HACS custom
+repository is taken over automatically, so there is **no second install** to perform and this
+repository's `hacs.json` already uses the layout the Marketplace reads. From 2026.11 you can also
+add it under **Settings → Marketplace** with the same repository URL
+(`https://github.com/kucau0901/haismart-local`). Official documentation:
+[Home Assistant Marketplace](https://www.home-assistant.io/integrations/marketplace/) and
+[HACS Marketplace guide](https://hacs.xyz/docs/marketplace/).
+
+**One copy only.** This fork and upstream publish the same integration domain (`haismart`) into the
+same `custom_components/haismart/` folder. Two installed repository records are not two working
+integrations: both records claim the same files. Keep the working fork's files and config entries;
+do **not** uninstall either repository just to remove a duplicate record.
+
+If both repositories are already marked installed, resolve the ownership records **before upgrading
+Home Assistant to 2026.11**, and before attempting a Marketplace update or reinstall:
+
+1. Back up Home Assistant and independently verify which fork's files are deployed.
+2. While HACS 2.0.5 still manages the installation, its admin WebSocket command
+   **`hacs/repositories/remove`** (plural) can unregister the unwanted repository record without
+   uninstalling its files. Use the actual unwanted record's ID only after owner confirmation.
+   **`hacs/repository/remove`** (singular) is an **uninstall** and can delete this shared folder:
+   it is not the cleanup operation.
+3. Read the records back: only the intended fork should be an installed owner of `haismart`.
+   Verify its files, config entries and entities are unchanged. Upstream may reappear in the
+   catalog as available/uninstalled; it must not remain a second installed owner.
+
+Marketplace 2026.11.1 rejects its record-only removal command for an installed repository, so do
+not defer this cleanup until after migration. If already migrated, obtain a separate recovery plan
+rather than uninstalling the shared component or editing `.storage` files.
+
+This repository's metadata cannot change records already stored in your Home Assistant instance.
+That cleanup is a separate, owner-confirmed operation; retaining domain `haismart` preserves the
+existing config-entry and entity identity rather than creating a second integration.
 
 ## Set up your appliance
 

@@ -11,13 +11,22 @@ outbound cloud transport is refused for every test by `refused_cloud_requests` b
 from __future__ import annotations
 
 try:
-    import pytest_homeassistant_custom_component  # noqa: F401
+    # Home Assistant 2026.11+ ships its test infrastructure as `pytest-homeassistant`, which
+    # registers its pytest plugin through an entry point.
+    import pytest_homeassistant  # noqa: F401
 
-    pytest_plugins = ["pytest_homeassistant_custom_component"]
     _HA_AVAILABLE = True
-except ImportError:  # pragma: no cover
-    _HA_AVAILABLE = False
-    collect_ignore = ["test_config_flow.py", "test_init.py"]
+except ImportError:
+    try:
+        import pytest_homeassistant_custom_component  # noqa: F401
+
+        pytest_plugins = ["pytest_homeassistant_custom_component"]
+        _HA_AVAILABLE = True
+    except ImportError:  # pragma: no cover - the library-only environment
+        _HA_AVAILABLE = False
+        # None of these tests can run without Home Assistant's fixtures. Collecting nothing is a
+        # skip, not a pass: CI checks the executed count.
+        collect_ignore_glob = ["test_*.py"]
 
 
 def make_status_frame(
@@ -349,6 +358,23 @@ if _HA_AVAILABLE:
             "custom_components.haismart.config_flow.async_cloud_transport", return_value=_refuse
         ):
             yield refused
+
+    @pytest.fixture(autouse=True)
+    def _no_handshake_probe(monkeypatch):  # noqa: ANN001, ANN201
+        """Keep diagnostics' optional handshake probe off the network.
+
+        The probe opens a real TCP connection to the appliance when diagnostics is downloaded, so
+        every test that collects diagnostics without patching it left a socket attempt behind at
+        teardown. Patch it at the point of use to behave like an unreachable unit; the tests that
+        exercise the reply itself patch it explicitly on top of this.
+        """
+
+        def _unreachable(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+            raise OSError("the test suite opens no sockets")
+
+        monkeypatch.setattr(
+            "custom_components.haismart.diagnostics.probe_handshake_reply", _unreachable
+        )
 
     @pytest.fixture
     def mock_uss():

@@ -10,34 +10,47 @@ permissions: {}
 
 jobs:
   pytest:
-    name: pytest (all three packages)
+    name: pytest (HA ${{ matrix.homeassistant }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Current stable, and the next release this fork is being prepared for. Each Home Assistant
+        # version needs its matching test package: the old pytest-homeassistant-custom-component
+        # pins 2026.10.4, while 2026.11 ships the official pytest-homeassistant from core. Pinning
+        # the two independently is what makes a version mismatch fail here instead of silently
+        # skipping the whole integration suite.
+        include:
+          - homeassistant: "2026.10.4"
+            test_plugin: "pytest-homeassistant-custom-component==0.13.375"
+          - homeassistant: "2026.11.1"
+            test_plugin: "pytest-homeassistant==2026.11.1"
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.13"
+          # Home Assistant 2026.10+ requires Python 3.14.2 or newer.
+          python-version: "3.14.2"
       - name: Install dependencies
-        # Home Assistant and its pytest plugin are installed deliberately: the ha-haismart suite
-        # SKIPS ITSELF when they are missing (see packages/ha-haismart/tests/conftest.py), so
+        # Home Assistant and its test package are installed deliberately: the ha-haismart suite
+        # skips itself when they are missing (see packages/ha-haismart/tests/conftest.py), so
         # without them CI would report green while never running a single integration test.
+        # aiodhcpwatcher and aiodiscover come with the components the config-flow tests import;
+        # leaving them out turns those tests into skips.
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pytest-asyncio cryptography httpx
-          python -m pip install homeassistant pytest-homeassistant-custom-component
+          python -m pip install pytest pytest-asyncio cryptography httpx aiodhcpwatcher aiodiscover
+          python -m pip install "homeassistant==${{ matrix.homeassistant }}" "${{ matrix.test_plugin }}"
       - name: Run all suites
+        env:
+          HA_JUNIT: ${{ runner.temp }}/ha-junit.xml
         run: ./scripts/test.sh
       - name: Fail if the Home Assistant suite silently skipped
-        run: |
-          cd packages/ha-haismart
-          python -m pytest -q -p no:cacheprovider --collect-only > /tmp/collected.txt
-          grep -qE "[1-9][0-9]* tests? collected" /tmp/collected.txt || {
-            echo "::error::the ha-haismart suite collected no tests - the HA plugin is missing"
-            cat /tmp/collected.txt
-            exit 1
-          }
+        # Collection alone is not proof: pytest also exits 0 when every test was skipped. The
+        # report is written by test.sh, and the gate rejects zero executed tests and any skip.
+        run: python scripts/check-ha-suite-ran.py "${RUNNER_TEMP}/ha-junit.xml"
 
   build:
     name: HACS build is in sync

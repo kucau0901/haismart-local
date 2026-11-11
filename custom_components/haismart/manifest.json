@@ -2,6 +2,7 @@
   "domain": "haismart",
   "name": "Haismart (Haier local)",
   "codeowners": [
+    "@kucau0901",
     "@enapt",
     "@darkdiamond"
   ],
@@ -83,10 +84,10 @@
       "macaddress": "E8EAFA*"
     }
   ],
-  "documentation": "https://github.com/enapt/haismart-local/tree/main/packages/ha-haismart",
+  "documentation": "https://github.com/kucau0901/haismart-local/tree/main/packages/ha-haismart",
   "integration_type": "device",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/enapt/haismart-local/issues",
+  "issue_tracker": "https://github.com/kucau0901/haismart-local/issues",
   "requirements": [],
   "version": "0.73.2.2",
   "zeroconf": [

@@ -18,16 +18,16 @@ from conftest import (
     make_status_frame,
     vane_positions_digital_model,
 )
+from ha_plugin import (
+    MockConfigEntry,
+    async_fire_time_changed,
+)
 from haismart_extractor import HaierCloud
 from homeassistant.components.climate import ClimateEntityFeature
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import (
-    MockConfigEntry,
-    async_fire_time_changed,
-)
 
 from custom_components.haismart.const import (
     CONF_DEVICE_ID,
@@ -2538,9 +2538,11 @@ async def test_firmware_reaches_the_device_registry(hass: HomeAssistant, mock_us
         firmware=("e_4.3.00", "R_6.0.01"),
         cloud_state=1000,
     )
-    await _setup(hass)
+    entry = await _setup(hass)
 
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "A1B2C3D4E5F6")})
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        (DOMAIN, "A1B2C3D4E5F6"), entry.entry_id
+    )
     assert device is not None
     assert device.sw_version == "e_4.3.00 / R_6.0.01"
 
@@ -2557,9 +2559,9 @@ async def test_firmware_learned_late_still_reaches_the_device_page(
     from homeassistant.helpers import device_registry as dr
 
     mock_uss.cloud.return_value = None                       # silent at setup
-    await _setup(hass)
+    entry = await _setup(hass)
     registry = dr.async_get(hass)
-    device = registry.async_get_device(identifiers={(DOMAIN, "A1B2C3D4E5F6")})
+    device = registry.async_get_device_by_identifier((DOMAIN, "A1B2C3D4E5F6"), entry.entry_id)
     assert device is not None and device.sw_version is None
 
     mock_uss.cloud.return_value = DeviceInfo(
@@ -2571,7 +2573,7 @@ async def test_firmware_learned_late_still_reaches_the_device_page(
     freezer.tick(timedelta(seconds=UDISCOVERY_INTERVAL + 1))
     await _tick(hass, freezer)
 
-    device = registry.async_get_device(identifiers={(DOMAIN, "A1B2C3D4E5F6")})
+    device = registry.async_get_device_by_identifier((DOMAIN, "A1B2C3D4E5F6"), entry.entry_id)
     assert device.sw_version == "e_4.3.00 / R_6.0.01"
 
 
@@ -2621,7 +2623,9 @@ async def test_ac_that_moved_on_dhcp_is_followed_automatically(
     # ...and the device page's link follows too, rather than pointing at the address it left
     from homeassistant.helpers import device_registry as dr
 
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "A1B2C3D4E5F6")})
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        (DOMAIN, "A1B2C3D4E5F6"), entry.entry_id
+    )
     assert device.configuration_url == "http://192.168.1.77"
 
 

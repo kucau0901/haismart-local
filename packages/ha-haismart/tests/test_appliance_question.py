@@ -14,10 +14,10 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+from ha_plugin import MockConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.haismart.const import (
     CONF_APP_TYPE,

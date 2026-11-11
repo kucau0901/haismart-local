@@ -10,15 +10,17 @@ cloud-reachability); see [PROTOCOL.md](PROTOCOL.md) for both.
 
 ```bash
 python3 -m venv --system-site-packages .venv && . .venv/bin/activate
-pip install pytest pytest-asyncio cryptography httpx ruff
-# for the Home Assistant integration tests:
-pip install homeassistant pytest-homeassistant-custom-component
+pip install pytest pytest-asyncio cryptography httpx ruff aiodhcpwatcher aiodiscover
+# for the Home Assistant integration tests, install the test package that matches your HA version:
+#   Home Assistant 2026.11+  -> pytest-homeassistant==<same version as homeassistant>
+#   Home Assistant 2026.10   -> pytest-homeassistant-custom-component==0.13.375
+pip install homeassistant pytest-homeassistant
 ```
 
 ## Tests & lint (must pass before a PR)
 
 ```bash
-./scripts/test.sh          # all three suites: haismart-hrdp, haismart-extractor, ha-haismart
+./scripts/test.sh          # packaging checks + all three suites: haismart-hrdp, haismart-extractor, ha-haismart
 ruff check packages        # lint (each package pins its own config)
 ```
 

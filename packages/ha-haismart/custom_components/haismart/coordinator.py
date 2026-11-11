@@ -1262,7 +1262,15 @@ class HaismartCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         Never raises, and a no-op once both agree: this runs on every successful discovery query.
         """
         registry = dr.async_get(self.hass)
-        device = registry.async_get_device(identifiers={(DOMAIN, self.device_id)})
+        # Identifiers are no longer unique across config entries, so newer cores look the device up
+        # within this entry; `async_get_device` is deprecated and stops working in HA 2027.8. The
+        # scoped lookup arrived in 2026.8, and hacs.json supports older cores, so keep the old call
+        # for those rather than raising the floor for a bookkeeping update.
+        lookup = getattr(registry, "async_get_device_by_identifier", None)
+        if lookup is not None:
+            device = lookup((DOMAIN, self.device_id), self.config_entry.entry_id)
+        else:  # pragma: no cover - Home Assistant < 2026.8
+            device = registry.async_get_device(identifiers={(DOMAIN, self.device_id)})
         if device is None:
             return      # the first refresh runs before the platforms create the device
         updates: dict[str, Any] = {}
