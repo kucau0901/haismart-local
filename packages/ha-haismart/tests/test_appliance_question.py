@@ -12,6 +12,7 @@ same way. So:
 """
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import patch
 
 from ha_plugin import MockConfigEntry
@@ -167,6 +168,12 @@ async def test_a_laundry_label_from_the_cloud_needs_no_question(
 async def test_the_options_offer_the_question_only_where_it_is_open(
     hass: HomeAssistant, mock_uss
 ) -> None:
+    # Real I/O yields to the event loop; an immediate AsyncMock can hide a pending reload.
+    async def read_status(*args, **kwargs):
+        await asyncio.sleep(0)
+        return [mock_uss.frame]
+
+    mock_uss.read.side_effect = read_status
     for uplus, offered in ((UNKNOWN, True), (AC, False)):
         entry = _entry(uplus)
         entry.add_to_hass(hass)
@@ -181,6 +188,9 @@ async def test_the_options_offer_the_question_only_where_it_is_open(
             )
             assert done["type"] == FlowResultType.CREATE_ENTRY
             assert entry.options[CONF_APPLIANCE_KIND] == KIND_NOT_AIR_CONDITIONER
+            # Saving options schedules a reload; finish it while the transport is still mocked.
+            await hass.async_block_till_done()
+            assert entry.runtime_data.ruled_out_air_conditioner
         await hass.config_entries.async_unload(entry.entry_id)
         await hass.config_entries.async_remove(entry.entry_id)
         await hass.async_block_till_done()
